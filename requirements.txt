@@ -1,0 +1,3 @@
+hiten>=0.2.4
+nvidia-physicsnemo
+nvidia-physicsnemo-sym
