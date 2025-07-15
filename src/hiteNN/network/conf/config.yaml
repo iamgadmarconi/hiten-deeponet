@@ -10,13 +10,13 @@ defaults :
 
 arch:
   branch:
-    nr_layers: 6
-    layer_size: 128
+    nr_layers: 8
+    layer_size: 256
     input_keys:
       - cm  # centre-manifold state (6-D)
   trunk:
-    nr_layers: 6
-    layer_size: 128
+    nr_layers: 8
+    layer_size: 256
     input_keys:
       - x        # component index (0..5)
       - energy   # Hamiltonian energy parameter
