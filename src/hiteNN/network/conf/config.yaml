@@ -1,0 +1,44 @@
+defaults :
+  - physicsnemo_default
+  - /arch/fully_connected_cfg@arch.branch
+  - /arch/fully_connected_cfg@arch.trunk
+  - /arch/deeponet_cfg@arch.deeponet
+  - scheduler: tf_exponential_lr
+  - optimizer: adamw
+  - loss: sum
+  - _self_
+
+arch:
+  branch:
+    nr_layers: 6
+    layer_size: 128
+    input_keys:
+      - cm  # centre-manifold state (6-D)
+  trunk:
+    nr_layers: 6
+    layer_size: 128
+    input_keys:
+      - x        # component index (0..5)
+      - energy   # Hamiltonian energy parameter
+      - mu       # mass ratio parameter
+      - lag_idx  # Lagrange point index (0 for L1, 1 for L2)
+  deeponet:
+    output_keys: u
+
+scheduler:
+  decay_rate: 0.9
+  decay_steps: 1000
+
+training:
+  rec_validation_freq: 1000
+  max_steps : 40000
+
+batch_size:
+  train: 256
+  validation: 128
+
+optimizer:
+  lr: 3e-4
+  weight_decay: 1e-4
+
+save_filetypes : "np"
