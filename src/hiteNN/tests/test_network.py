@@ -6,12 +6,12 @@ from typing import Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from hiten import GenericOrbit
 from physicsnemo.sym.key import Key
 from physicsnemo.sym.models.deeponet import DeepONetArch
 from physicsnemo.sym.models.fully_connected import FullyConnectedArch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
-from hiten import GenericOrbit
+sys.path.insert(0, "src")
 
 from hiteNN.training.data import _create_dataset
 from hiteNN.training.sys import _create_system
