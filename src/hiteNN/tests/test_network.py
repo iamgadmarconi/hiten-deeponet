@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import timeit
 from typing import Tuple
 
 import matplotlib.pyplot as plt
@@ -128,7 +129,7 @@ def main():
     model = load_trained_model()
 
     # Sample 6 random initial conditions (1 original + 5 additional)
-    n_samples = 6
+    n_samples = 20
     print(f"Sampling {n_samples} random initial conditions via hiten ...")
     
     all_cm_states = []
@@ -153,14 +154,17 @@ def main():
         print("Centre-manifold state (cm)", cm_state)
         print("Energy", energy)
         print(f"Hiten computation time: {hiten_time:.6f}s")
+    
+        # Time DeepONet prediction with high precision
+        def run_deeponet():
+            return deeponet_predict(model, cm_state, energy, mu_val, lag_idx)
         
-        # Time DeepONet prediction
-        start_time = time.time()
-        syn_pred = deeponet_predict(model, cm_state, energy, mu_val, lag_idx)
-        deeponet_time = time.time() - start_time
+        deeponet_time = timeit.timeit(run_deeponet, number=1)
+        syn_pred = run_deeponet()  # Get the actual prediction
         
         print(f"DeepONet computation time: {deeponet_time:.6f}s")
-        print(f"Speedup factor: {hiten_time/deeponet_time:.1f}x")
+        speedup_factor = hiten_time / deeponet_time
+        print(f"Speedup factor: {speedup_factor:.1f}x")
         
         # Calculate error
         error = np.abs(syn_pred - syn_truth)
@@ -189,6 +193,9 @@ def main():
     hiten_times = np.array(hiten_times)
     deeponet_times = np.array(deeponet_times)
     
+    # Calculate speedups for all samples
+    speedups = hiten_times / deeponet_times
+    
     # Create comparison plots
     print("\nCreating comparison plots...")
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
@@ -198,27 +205,29 @@ def main():
     for i in range(6):
         row = i // 3
         col = i % 3
+        avg_error = np.mean(errors[:, i])
         axes[row, col].bar(range(n_samples), errors[:, i])
-        axes[row, col].set_title(f'Absolute Error in {component_names[i]}')
+        axes[row, col].set_title(f'Absolute Error in {component_names[i]}\nAvg: {avg_error:.2e}')
         axes[row, col].set_xlabel('Sample Index')
         axes[row, col].set_ylabel('Absolute Error')
         axes[row, col].grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('error_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(os.path.dirname(__file__), 'error_comparison.png'), dpi=150, bbox_inches='tight')
     plt.show()
     
     # L2 norm errors plot
     l2_errors = np.linalg.norm(errors, axis=1)
+    avg_l2_error = np.mean(l2_errors)
     plt.figure(figsize=(10, 6))
     plt.bar(range(n_samples), l2_errors)
-    plt.title('L2 Norm of Prediction Errors')
+    plt.title(f'L2 Norm of Prediction Errors\nAvg: {avg_l2_error:.2e}')
     plt.xlabel('Sample Index')
     plt.ylabel('L2 Error')
     plt.grid(True, alpha=0.3)
     for i, err in enumerate(l2_errors):
         plt.text(i, err + max(l2_errors)*0.01, f'{err:.2e}', ha='center', va='bottom')
-    plt.savefig('l2_errors.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(os.path.dirname(__file__), 'l2_errors.png'), dpi=150, bbox_inches='tight')
     plt.show()
     
     # Timing comparison plot
@@ -236,7 +245,6 @@ def main():
     plt.grid(True, alpha=0.3)
     
     plt.subplot(1, 2, 2)
-    speedups = hiten_times / deeponet_times
     plt.bar(range(n_samples), speedups)
     plt.title('DeepONet Speedup Factor')
     plt.xlabel('Sample Index')
@@ -246,7 +254,7 @@ def main():
         plt.text(i, speedup + max(speedups)*0.01, f'{speedup:.1f}x', ha='center', va='bottom')
     
     plt.tight_layout()
-    plt.savefig('timing_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(os.path.dirname(__file__), 'timing_comparison.png'), dpi=150, bbox_inches='tight')
     plt.show()
     
     # Summary statistics
@@ -260,18 +268,6 @@ def main():
     print(f"\nAverage Hiten time: {np.mean(hiten_times)*1000:.2f} ± {np.std(hiten_times)*1000:.2f} ms")
     print(f"Average DeepONet time: {np.mean(deeponet_times)*1000:.2f} ± {np.std(deeponet_times)*1000:.2f} ms")
     print(f"Average speedup: {np.mean(speedups):.1f}x ± {np.std(speedups):.1f}x")
-    
-    # Plot orbits for first sample as example
-    print(f"\nPlotting orbits for first sample (L{all_lag_idxs[0]})...")
-    _, point_obj, _ = _create_system(all_lag_idxs[0], 8, mu=all_mu_vals[0])
-
-    real_orbit = GenericOrbit(point_obj, all_syn_truths[0])
-    real_orbit.propagate()
-    real_orbit.plot()
-
-    pred_orbit = GenericOrbit(point_obj, all_syn_preds[0])
-    pred_orbit.propagate()
-    pred_orbit.plot()
 
 
 if __name__ == "__main__":

@@ -191,16 +191,16 @@ def create_training_validation_split(cm_states: np.ndarray,
 
 
 def create_multi_energy_dataset(point: int, degree: int, n_samples_per_energy: int,
-                               energy_levels: List[float],
-                               section_coord: str = 'q3',
-                               amplitude: float = 0.05,
-                               seed: int = 42) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                            energy_levels: List[float],
+                            section_coord: str = 'q3',
+                            amplitude: float = 0.05,
+                            seed: int = 42) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate dataset for specific discrete energy levels."""
     cm_list, e_list, syn_list = [], [], []
     for energy in energy_levels:
         cm, en, syn = _create_dataset(point, degree, n_samples_per_energy,
-                                      (energy, energy), section_coord,
-                                      amplitude, seed)
+                                    (energy, energy), section_coord,
+                                    amplitude, seed)
         cm_list.append(cm)
         e_list.append(en)
         syn_list.append(syn)
@@ -275,13 +275,6 @@ def main():
         seed=seed,
     )
 
-    print(f"Total samples generated: {len(cm_states)}")
-    print(f"CM state shape: {cm_states.shape}")
-    print(f"Energy array shape: {energies.shape}")
-    print(f"Mu array shape    : {mus_arr.shape}")
-    print(f"L-point array shape: {lag_idxs.shape}")
-    print(f"Synodic state shape: {synodic_states.shape}")
-    
     # Save data
     path = r"src\hiteNN\training\_data\training_data.npz"
     save_dataset(cm_states, energies, mus_arr, lag_idxs, synodic_states, path)

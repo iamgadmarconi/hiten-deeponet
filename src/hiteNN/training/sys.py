@@ -1,5 +1,4 @@
 from hiten import CenterManifold, LibrationPoint, System
-from hiten.system.body import Body
 
 # Internal cache keyed by (mu, point, degree)
 _CACHE: dict[tuple[float | None, int, int], tuple[System, LibrationPoint, CenterManifold]] = {}
