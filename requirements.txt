@@ -1,4 +1,4 @@
-hiten>=0.2.5
+hiten>=0.2.9
 nvidia-physicsnemo
 nvidia-physicsnemo.sym
 Cython

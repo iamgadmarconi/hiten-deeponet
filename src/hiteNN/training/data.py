@@ -1,8 +1,10 @@
+from typing import List, Sequence, Tuple
+
 import numpy as np
-from typing import Tuple, List, Dict, Sequence
+from hiten.algorithms.poincare.config import _get_section_config
+from hiten.algorithms.poincare.map import _solve_missing_coord
+
 from .sys import _create_system
-from hiten.algorithms.poincare.config import _get_section_config  # NEW IMPORT
-from hiten.algorithms.poincare.map import _solve_missing_coord  # NEW IMPORT
 
 
 def _create_dataset(point: int, degree: int, n_samples: int,
@@ -216,25 +218,25 @@ def save_dataset(
     mus: np.ndarray,
     lag_idxs: np.ndarray,
     synodic_states: np.ndarray,
-    filename: str = "training_data.npz",
+    path: str = "training_data.npz",
 ) -> None:
     """Save extended dataset including parameters to a compressed .npz file."""
     np.savez(
-        filename,
+        path,
         center_manifold_states=cm_states,
         energies=energies,
         mus=mus,
         lag_idxs=lag_idxs,
         synodic_states=synodic_states,
     )
-    print(f"Dataset saved to {filename}")
+    print(f"Dataset saved to {path}")
 
 
 def load_dataset(
-    filename: str = "training_data.npz",
+    path: str = "training_data.npz",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Load dataset with parameters (cm_states, energies, mus, lag_idxs, synodic_states)."""
-    data = np.load(filename)
+    data = np.load(path)
     return (
         data['center_manifold_states'],
         data['energies'],
@@ -242,3 +244,49 @@ def load_dataset(
         data['lag_idxs'],
         data['synodic_states'],
     )
+
+
+def main():
+    # Configuration
+    degree = 8
+    n_samples = 2000  # per (mu, point) combination
+    energy_range = (0.0, 1.0)
+    amplitude = 0.8
+    section_coord = 'q3'
+    seed = 42
+    
+    # Parameters to sweep
+    mus = [0.01215, 0.0009537]  # Earth-Moon, Sun-Jupiter for example
+    l_points = [1, 2]
+
+    print("Generating dataset with:")
+    print(f"  mass ratios      : {mus}")
+    print(f"  Libration points : {l_points}")
+    print(f"  Samples per combo: {n_samples}")
+
+    cm_states, energies, mus_arr, lag_idxs, synodic_states = build_parameter_sweep_dataset(
+        mus=mus,
+        l_points=l_points,
+        degree=degree,
+        n_samples=n_samples,
+        energy_range=energy_range,
+        section_coord=section_coord,
+        amplitude=amplitude,
+        seed=seed,
+    )
+
+    print(f"Total samples generated: {len(cm_states)}")
+    print(f"CM state shape: {cm_states.shape}")
+    print(f"Energy array shape: {energies.shape}")
+    print(f"Mu array shape    : {mus_arr.shape}")
+    print(f"L-point array shape: {lag_idxs.shape}")
+    print(f"Synodic state shape: {synodic_states.shape}")
+    
+    # Save data
+    path = r"src\hiteNN\training\_data\training_data.npz"
+    save_dataset(cm_states, energies, mus_arr, lag_idxs, synodic_states, path)
+    print(f"Saved to {path}")
+
+
+if __name__ == "__main__":
+    main()
