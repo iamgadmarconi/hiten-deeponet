@@ -22,7 +22,7 @@ from hiteNN.training.data import load_dataset
 @physicsnemo.sym.main(config_path="conf", config_name="config")
 def run(cfg: PhysicsNeMoConfig) -> None:
     # ─────────────────────────────── 1. Load & reshape data ──────────────────────────────
-    data_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "training_data.npz")
+    data_path = os.path.join(os.path.dirname(__file__), "..", "training", "_data", "training_data.npz")
     cm_states, energies, mus, lag_idxs, synodic_states = load_dataset(data_path)
 
     # ───────────────────────── Build inputs ──────────────────────────

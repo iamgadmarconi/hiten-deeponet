@@ -3,20 +3,28 @@ defaults :
   - /arch/fully_connected_cfg@arch.branch
   - /arch/fully_connected_cfg@arch.trunk
   - /arch/deeponet_cfg@arch.deeponet
-  - scheduler: tf_exponential_lr
+  - scheduler: cosine_annealing_warm_restarts
   - optimizer: adamw
   - loss: sum
   - _self_
 
 arch:
   branch:
-    nr_layers: 8
-    layer_size: 256
+    nr_layers: 12          # deeper network
+    layer_size: 512        # wider network
+    activation_fn: silu
+    skip_connections: true      # residual links improve convergence
+    adaptive_activations: true  # learnable activation scaling
+    weight_norm: true           # better conditioning
     input_keys:
       - cm  # centre-manifold state (6-D)
   trunk:
-    nr_layers: 8
-    layer_size: 256
+    nr_layers: 12
+    layer_size: 512
+    activation_fn: silu
+    skip_connections: true
+    adaptive_activations: true
+    weight_norm: true
     input_keys:
       - x        # component index (0..5)
       - energy   # Hamiltonian energy parameter
@@ -25,20 +33,25 @@ arch:
   deeponet:
     output_keys: u
 
+# Scheduler fine-tuning (see CosineAnnealingConf in scheduler.py)
 scheduler:
-  decay_rate: 0.9
-  decay_steps: 1000
+  T_0: 20000      # restart every 20k steps (SGDR)
+  T_mult: 2
+  eta_min: 1e-6       # floor learning-rate
 
+# Optimiser param groups to keep W-decay off weights (only bias & scale decay)
+optimizer:
+  lr: 1e-4
+  weight_decay: 1e-6
+
+# Mixed-precision & gradient clipping
 training:
-  rec_validation_freq: 1000
-  max_steps : 40000
+  rec_validation_freq: 10000
+  max_steps : 299000
+  grad_clip_max_norm: 1.0
 
 batch_size:
-  train: 256
-  validation: 128
-
-optimizer:
-  lr: 3e-4
-  weight_decay: 1e-4
+  train: 1024
+  validation: 512
 
 save_filetypes : "np"
